@@ -1,0 +1,71 @@
+<!-- dynamic_spinner_view.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+android:layout_margin="20dp"
+    android:orientation="vertical">
+
+
+    <EditText
+        android:id="@+id/column_name_edit_text"
+        android:layout_width="match_parent"
+
+        android:layout_height="wrap_content"
+        android:background="@drawable/border"
+
+        android:hint="Enter Entity Name"
+        android:padding="16dp" />
+
+    <Spinner
+        android:id="@+id/spinner1"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"/>
+
+    <Spinner
+        android:id="@+id/spinner2"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Is Selection ?"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+android:textSize="18dp"
+        android:id="@+id/isSelectionTxt"/>
+
+    <RadioGroup
+        android:layout_marginTop="10dp"
+        android:id="@+id/groupradio"
+        android:layout_marginLeft="10dp"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <!-- In RadioGroup create the 1 Radio Button-->
+        <!-- like this we will add some more Radio Button-->
+        <RadioButton
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/radia_id1"
+            android:text="Yes"
+            android:textSize="20sp"/>
+
+        <RadioButton
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/radia_id2"
+            android:checked="true"
+            android:text="No"
+            android:textSize="20sp"/>
+
+
+    </RadioGroup>
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/isSelectedEdt"
+        android:visibility="gone"/>
+
+</LinearLayout>
