@@ -5,6 +5,7 @@ import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     String isSelected = "";
     int count = 0;
     private List<View> columnRows;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout.LayoutParams layoutParams0 = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                100);
+                150);
 
         layoutParams0.setMargins(20, 20, 20, 10);
 
@@ -145,11 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                 // Get the selected Radio Button
-                RadioButton radioButton = (RadioButton) group.findViewById(checkedId);
 
-                isSelected = radioButton.getText().toString();
-
-                Toast.makeText(MainActivity.this, "" + isSelected, Toast.LENGTH_SHORT).show();
 
             }
         });
@@ -159,14 +157,12 @@ public class MainActivity extends AppCompatActivity {
         dataTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//                String selectedOption = (String) parent.getItemAtPosition(position);
-
-
 
                 int selectedOption = dataListId.get(position);
 
                 if(selectedOption != 1){
                     txtIsSelection.setVisibility(View.GONE);
+                    radiogroup.clearCheck();
                     radiogroup.setVisibility(View.GONE);
 
                 }else{
@@ -288,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
         ContentValues values = new ContentValues();
         values.put(columnName, columnValue);
 
-        long rowId = db.insert(tableName, null, values);
+        String rowId = String.valueOf(db.insert(tableName, null, values));
 
 
         for (int i = 0; i < dynamicViews.size(); i++) {
@@ -301,11 +297,20 @@ public class MainActivity extends AppCompatActivity {
 
 
             int selectedRadioButtonId = radioGroup.getCheckedRadioButtonId();
-            RadioButton radioButton = findViewById(selectedRadioButtonId);
 
-            String isSelected = radioButton.getText().toString();
+         if(selectedRadioButtonId == (-1)){
+              isSelected = "No";
 
-            Toast.makeText(this, ""+radioButton.getText().toString(), Toast.LENGTH_SHORT).show();
+         }else{
+
+             RadioButton radioButton = findViewById(selectedRadioButtonId);
+
+
+
+              isSelected = radioButton.getText().toString();
+
+         }
+
 
             String selectedValue1 = (String) spinner1.getSelectedItem();
 
@@ -359,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void saveDataintoMapping(int columnIndex, long rowId, String strColumnName, String strColumnName1, int count, String isSelected) {
+    private void saveDataintoMapping(int columnIndex, String rowId, String strColumnName, String strColumnName1, int count, String isSelected) {
 
 
         SQLiteDatabase dbm = mDatabaseHelper.getWritableDatabase();
@@ -384,6 +389,12 @@ public class MainActivity extends AppCompatActivity {
         dbm.insert(tableName, null, valuesMap);
 
         Toast.makeText(this, "Data Inserted Successfully", Toast.LENGTH_SHORT).show();
+
+
+        Intent intent = new Intent(MainActivity.this,DynamicUI.class);
+        intent.putExtra("table_name", tableName);
+        intent.putExtra("form_id", rowId);
+        startActivity(intent);
 
 
     }

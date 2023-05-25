@@ -16,6 +16,9 @@
         android:theme="@style/Theme.Dummy_spinner"
         tools:targetApi="31">
         <activity
+            android:name=".ShowData"
+            android:exported="false" />
+        <activity
             android:name=".DynamicUI"
             android:exported="false" />
         <activity
