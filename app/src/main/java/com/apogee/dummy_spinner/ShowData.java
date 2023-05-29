@@ -1,13 +1,12 @@
 package com.apogee.dummy_spinner;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -20,55 +19,88 @@ public class ShowData extends AppCompatActivity {
     private ExternalDatabaseHelper mDatabaseHelper;
 
     List<String> data = new ArrayList<>();
-    ListView list;
-
-
+    ListView listView;
+    private SQLiteDatabase database;
     String mapping_id;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_data);
 
-        list = findViewById(R.id.list);
-
-
 
         mDatabaseHelper = new ExternalDatabaseHelper(this);
 
+        database = mDatabaseHelper.getReadableDatabase();
 
-        mapping_id = getIntent().getStringExtra("table_id");
+        // Retrieve table names and their column count
+        List<String> tableList = getTableList();
+
+        // Display the table names in a ListView
+        listView = findViewById(R.id.list);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, tableList);
+        listView.setAdapter(adapter);
 
 
-        displayAllData();
-
-
-        // Retrieve and display all data from the table
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String tableName = tableList.get(position);
+                int tableId = getTableId(tableName);
+                Toast.makeText(ShowData.this, "Table ID: " + tableId, Toast.LENGTH_SHORT).show();
+            }
+        });
 
     }
 
-    private void displayAllData() {
-        SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
-        Cursor cursor = db.query("ShowData", null, "form_id=?", new String[]{String.valueOf(mapping_id)}, null, null, null);
+    private List<String> getTableList() {
+        List<String> tableList = new ArrayList<>();
+        Cursor cursor = database.rawQuery("SELECT * FROM Form", null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
 
-        if (cursor.moveToFirst()) {
 
-            do {
+                int formId = cursor.getInt(cursor.getColumnIndex("form_id"));
+                String formName = cursor.getString(cursor.getColumnIndex("form_name"));
 
-                String column_name = String.valueOf(cursor.getColumnIndex("column_name"));
-                String column_value = String.valueOf(cursor.getColumnIndex("column_value"));
-                String strcolumn_name = cursor.getString(Integer.parseInt(column_name));
-                String strcolumn_value = cursor.getString(Integer.parseInt(column_value));
-                data.add(strcolumn_name + ", "+strcolumn_value);
+                int ColumnCount = getTableColumnCount(formId);
 
-            } while (cursor.moveToNext());
+                tableList.add(formId + " (Form Name : " + formName + ")" + "\n" + "(Column Count : " + ColumnCount);
+            }
+            cursor.close();
         }
-
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, data);
-
-        list.setAdapter(adapter);
-
-        cursor.close();
+        return tableList;
     }
 
+    private int getTableColumnCount(int formId) {
+        int tableCount = 0;
+        Cursor cursor = database.rawQuery("SELECT * FROM FormMapping Where form_id = "+ formId+" ", null);
+        if (cursor != null) {
+            tableCount = cursor.getCount();
+            cursor.close();
+        }
+        return tableCount;
+    }
+
+    private int getTableId(String tableName) {
+        int tableId = 0;
+        Cursor cursor = database.rawQuery("SELECT rowid FROM " + tableName + " LIMIT 1", null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                tableId = cursor.getInt(0);
+            }
+            cursor.close();
+        }
+        return tableId;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Close the database
+        if (database != null) {
+            database.close();
+        }
+    }
 }

@@ -3,12 +3,18 @@ package com.apogee.dummy_spinner;
 import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.location.Location;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -17,6 +23,7 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -29,9 +36,16 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,6 +55,14 @@ import java.util.Locale;
 import java.util.Map;
 
 public class DynamicUI extends AppCompatActivity {
+
+    private FusedLocationProviderClient fusedLocationClient;
+    private LocationCallback locationCallback;
+    private static final int REQUEST_PERMISSION = 200;
+    private static final int REQUEST_CODE_CREATE_FILE = 201;
+    private boolean isRecording = false;
+    private MediaRecorder mediaRecorder;
+    private Uri audioFileUri;
     public String tableName, tableId;
     private static final int REQUEST_IMAGE_CAPTURE = 2;
     private LinearLayout columnLayout;
@@ -64,6 +86,11 @@ public class DynamicUI extends AppCompatActivity {
     LinkedHashMap<String, String> createdValues = new LinkedHashMap<String, String>();
     String[] dataTypes = {"TEXT1", "TEXT2", "TEXT3", "TEXT4", "TEXT5", "TEXT6"};
 
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+
+    TextView filePathTextView;
+
+    String filePath;
     String[] selectionArgs;
 
     @Override
@@ -97,10 +124,6 @@ public class DynamicUI extends AppCompatActivity {
 
         getTableColumns(tableName);
         createUI(tableName);
-//        createUI(columns);
-
-//        saveButton.setOnClickListener(v -> saveData(tableId, columns));
-
 
     }
 
@@ -127,7 +150,6 @@ public class DynamicUI extends AppCompatActivity {
                 do {
 
 
-                    int dataType = (cursor.getColumnIndex("subtype_id"));
                     String dataTypee = cursor.getString(cursor.getColumnIndex("subtype_id"));
 
 
@@ -221,7 +243,7 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(selectValues);
 
-                    } else if ((subType.equalsIgnoreCase("STRING") || subType.equalsIgnoreCase("LOCATION")) && IsSelected.equalsIgnoreCase("No")) {
+                    } else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("No")) {
 
                         int id = cursor.getInt(idIndex);
 
@@ -305,7 +327,7 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(selectValues);
-                    } else if (subType.equalsIgnoreCase("IMAGE") || subType.equalsIgnoreCase("VIDEO") || subType.equalsIgnoreCase("AUDIO") || subType.equalsIgnoreCase("PDF") || subType.equalsIgnoreCase("EXCEL")) {
+                    } else if (subType.equalsIgnoreCase("IMAGE") || subType.equalsIgnoreCase("VIDEO") || subType.equalsIgnoreCase("PDF") || subType.equalsIgnoreCase("EXCEL")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -383,6 +405,104 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(layout);
 
 
+                    } else if (subType.equals("Audio") || subType.equals("AUDIO")) {
+
+                        LayoutInflater inflater = LayoutInflater.from(this);
+                        View dynamicView = inflater.inflate(R.layout.dynamic_audio_view, null);
+
+                        TextView columnNameTextView = new TextView(this);
+                        columnNameTextView.setText(columnName);
+
+
+                        // Set up UI components
+                        Button recordButton = dynamicView.findViewById(R.id.recordButton);
+                        Button stopButton = dynamicView.findViewById(R.id.stopButton);
+                        Button saveButton = dynamicView.findViewById(R.id.saveButton);
+
+                        // Disable the stop and save buttons initially
+                        stopButton.setEnabled(false);
+                        saveButton.setEnabled(false);
+
+                        // Set click listeners for buttons
+                        recordButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (isRecording) {
+                                    stopRecording();
+                                } else {
+                                    checkPermissions();
+                                    startRecording();
+                                }
+                            }
+                        });
+
+                        stopButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                stopRecording();
+                            }
+                        });
+
+                        saveButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                requestSavePermission();
+                            }
+                        });
+
+
+                        columnLayout.addView(columnNameTextView);
+                        columnLayout.addView(dynamicView);
+
+
+                    } else if (subType.equals("LOCATION")) {
+
+                        LayoutInflater inflater = LayoutInflater.from(this);
+                        View dynamicView = inflater.inflate(R.layout.dynamic_location, null);
+
+                        TextView columnNameTextView = new TextView(this);
+                        columnNameTextView.setText(columnName);
+
+
+                        // Set up UI components
+                        Button getLocationButton = dynamicView.findViewById(R.id.getLocationButton);
+                        TextView locationTextView = dynamicView.findViewById(R.id.locationTextView);
+
+                        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+                        getLocationButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (ContextCompat.checkSelfPermission(DynamicUI.this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                                        == PackageManager.PERMISSION_GRANTED) {
+                                    startLocationUpdates();
+                                } else {
+                                    requestLocationPermission();
+                                }
+                            }
+                        });
+
+                        locationCallback = new LocationCallback() {
+                            @Override
+                            public void onLocationResult(LocationResult locationResult) {
+                                if (locationResult == null) {
+                                    return;
+                                }
+                                Location location = locationResult.getLastLocation();
+                                if (location != null) {
+                                    String latitude = String.valueOf(location.getLatitude());
+                                    String longitude = String.valueOf(location.getLongitude());
+                                    String locationText = "Latitude: " + latitude + "\nLongitude: " + longitude;
+                                    locationTextView.setText(locationText);
+                                    createdValues.put(columnName, locationText);
+                                }
+                            }
+                        };
+
+
+                        columnLayout.addView(columnNameTextView);
+                        columnLayout.addView(dynamicView);
+
                     } else {
                         // Get the values from the cursor
                         int id = cursor.getInt(idIndex);
@@ -402,6 +522,8 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(editText);
                     }
+
+
                 } while (cursor.moveToNext());
             } else {
                 Log.e(TAG, "Column index not found in cursor");
@@ -416,6 +538,150 @@ public class DynamicUI extends AppCompatActivity {
         cursor.close();
         db.close();
 
+    }
+
+
+    private void requestLocationPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    private void startLocationUpdates() {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(5000);
+
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
+    }
+
+
+    private void startRecording() {
+
+        mediaRecorder = new MediaRecorder();
+        audioFileUri = createAudioFileUri();
+
+        if (audioFileUri != null) {
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            mediaRecorder.setOutputFile(audioFileUri.getPath());
+
+            try {
+                mediaRecorder.prepare();
+                mediaRecorder.start();
+                isRecording = true;
+
+                Button recordButton = findViewById(R.id.recordButton);
+                Button stopButton = findViewById(R.id.stopButton);
+                Button saveButton = findViewById(R.id.saveButton);
+                recordButton.setEnabled(false);
+                stopButton.setEnabled(true);
+                saveButton.setEnabled(false);
+
+                Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Toast.makeText(this, "Failed to create audio file", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+    private void stopRecording() {
+        if (mediaRecorder != null) {
+            mediaRecorder.stop();
+            mediaRecorder.release();
+            mediaRecorder = null;
+            isRecording = false;
+
+            Button stopButton = findViewById(R.id.stopButton);
+            Button saveButton = findViewById(R.id.saveButton);
+            stopButton.setEnabled(false);
+            saveButton.setEnabled(true);
+
+            Toast.makeText(this, "Recording stopped", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void requestSavePermission() {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("audio/3gp");
+        intent.putExtra(Intent.EXTRA_TITLE, "recording.3gp");
+        startActivityForResult(intent, REQUEST_CODE_CREATE_FILE);
+    }
+
+
+    private void saveRecording() {
+        if (audioFileUri != null) {
+            ContentResolver contentResolver = getContentResolver();
+            try {
+                InputStream inputStream = contentResolver.openInputStream(audioFileUri);
+                if (inputStream != null) {
+                    // Implement your logic to save the recording from the input stream
+                    Toast.makeText(this, "Recording saved", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Unable to open input stream", Toast.LENGTH_SHORT).show();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Error saving recording", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "No audio file selected", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Uri createAudioFileUri() {
+        ContentResolver contentResolver = getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Audio.Media.DISPLAY_NAME, "recording.3gp");
+        values.put(MediaStore.Audio.Media.MIME_TYPE, "audio/3gpp");
+
+        Uri audioUri = null;
+        try {
+            audioUri = contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return audioUri;
+    }
+
+    private boolean checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_PERMISSION);
+            return false;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startLocationUpdates();
+            } else {
+                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
 
@@ -469,6 +735,11 @@ public class DynamicUI extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_PICK_DOCUMENT);
     }
 
+
+    private boolean isRecording() {
+        return isRecording;
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -497,8 +768,12 @@ public class DynamicUI extends AppCompatActivity {
             Toast.makeText(this, "" + strPicturePathCamera, Toast.LENGTH_SHORT).show();
 
 
+        } else if (requestCode == REQUEST_CODE_CREATE_FILE && resultCode == RESULT_OK) {
+            audioFileUri = data.getData();
+            saveRecording();
         }
     }
+
 
     public String saveImageBitmap(Bitmap bitmap) {
         // Create a directory to save the image
@@ -550,7 +825,7 @@ public class DynamicUI extends AppCompatActivity {
         Toast.makeText(this, "" + columnNames.toString() + editTextValues.toString(), Toast.LENGTH_SHORT).show();
 
 
-       insertColumnName(columnNames,editTextValues);
+        insertColumnName(columnNames, editTextValues);
 
         Intent intent = new Intent(DynamicUI.this, ShowData.class);
         intent.putStringArrayListExtra("column_name", columnNames);
@@ -560,9 +835,6 @@ public class DynamicUI extends AppCompatActivity {
 
 
 //       insertColumnValues(editTextValues);
-
-
-
 
 
     }
@@ -576,13 +848,12 @@ public class DynamicUI extends AppCompatActivity {
             String columnValue = editTextValues.get(i);
 
 
-            saveNameintoShowData(columnName,columnValue);
+            saveNameintoShowData(columnName, columnValue);
 
 
         }
 
     }
-
 
 
     private void saveNameintoShowData(String columnName, String columnValue) {
@@ -607,7 +878,6 @@ public class DynamicUI extends AppCompatActivity {
         dbm.insert(tableName, null, valuesMap);
 
         Toast.makeText(this, "Data Inserted Successfully", Toast.LENGTH_SHORT).show();
-
 
 
     }

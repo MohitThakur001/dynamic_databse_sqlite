@@ -160,12 +160,12 @@ public class MainActivity extends AppCompatActivity {
 
                 int selectedOption = dataListId.get(position);
 
-                if(selectedOption != 1){
+                if (selectedOption != 1) {
                     txtIsSelection.setVisibility(View.GONE);
                     radiogroup.clearCheck();
                     radiogroup.setVisibility(View.GONE);
 
-                }else{
+                } else {
                     txtIsSelection.setVisibility(View.VISIBLE);
                     radiogroup.setVisibility(View.VISIBLE);
                 }
@@ -238,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
 
         mDatabaseHelper = new ExternalDatabaseHelper(this);
         SQLiteDatabase database = mDatabaseHelper.getReadableDatabase();
-        String selectQuery = "SELECT * FROM ColumnSubtype WHERE type_id = " + selectedOption;
+        String selectQuery = " SELECT * FROM ColumnSubtype WHERE type_id = " + selectedOption;
 
         // Execute the query
         Cursor cursor = database.rawQuery(selectQuery, null);
@@ -295,21 +295,19 @@ public class MainActivity extends AppCompatActivity {
             RadioGroup radioGroup = dynamicView.findViewById(R.id.groupradio);
 
 
-
             int selectedRadioButtonId = radioGroup.getCheckedRadioButtonId();
 
-         if(selectedRadioButtonId == (-1)){
-              isSelected = "No";
+            if (selectedRadioButtonId == (-1)) {
+                isSelected = "No";
 
-         }else{
+            } else {
 
-             RadioButton radioButton = findViewById(selectedRadioButtonId);
+                RadioButton radioButton = findViewById(selectedRadioButtonId);
 
 
+                isSelected = radioButton.getText().toString();
 
-              isSelected = radioButton.getText().toString();
-
-         }
+            }
 
 
             String selectedValue1 = (String) spinner1.getSelectedItem();
@@ -355,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "retrieveSelectedValues: " + selectedValuesText);
 
 
-            saveDataintoMapping(columnIndex, rowId, strColumnName, strColumnName, count,isSelected);
+            saveDataintoMapping(columnIndex, rowId, strColumnName, strColumnName, count, isSelected);
 
 
         }
@@ -391,7 +389,7 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Data Inserted Successfully", Toast.LENGTH_SHORT).show();
 
 
-        Intent intent = new Intent(MainActivity.this,DynamicUI.class);
+        Intent intent = new Intent(MainActivity.this, DynamicUI.class);
         intent.putExtra("table_name", tableName);
         intent.putExtra("form_id", rowId);
         startActivity(intent);

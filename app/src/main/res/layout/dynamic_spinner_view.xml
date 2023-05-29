@@ -47,14 +47,12 @@ android:textSize="18dp"
         <RadioButton
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/radia_id1"
             android:text="Yes"
             android:textSize="20sp"/>
 
         <RadioButton
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/radia_id2"
             android:checked="true"
             android:text="No"
             android:textSize="20sp"/>
@@ -65,7 +63,6 @@ android:textSize="18dp"
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/isSelectedEdt"
         android:visibility="gone"/>
 
 </LinearLayout>
