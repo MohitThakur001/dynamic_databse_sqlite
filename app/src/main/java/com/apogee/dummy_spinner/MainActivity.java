@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private List<String> selectedValues;
     private ExternalDatabaseHelper mDatabaseHelper;
     List<Integer> dataListId = new ArrayList<>();
+    ImageView showtable;
     List<String> dataListType = new ArrayList<>();
     List<Integer> subDataListId = new ArrayList<>();
     List<String> subDataListType = new ArrayList<>();
@@ -49,6 +51,14 @@ public class MainActivity extends AppCompatActivity {
 
 
         tableNameEditText = findViewById(R.id.table_name_edit_text);
+        showtable = findViewById(R.id.showtable);
+        showtable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent  intent = new Intent(MainActivity.this,ShowData.class);
+                startActivity(intent);
+            }
+        });
 
         dynamicViews = new ArrayList<>();
         spinnerAdapters = new ArrayList<>();

@@ -28,14 +28,17 @@
         android:layout_width="match_parent"
         android:layout_margin="20dp"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:text="Save"
+
+        android:text="Save Data"
         android:id="@+id/saveButton"/>
+
+
 
     <Button
         android:layout_width="match_parent"
         android:layout_margin="20dp"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:text="Show Saved Data"
         android:id="@+id/showButton"/>
 </LinearLayout>

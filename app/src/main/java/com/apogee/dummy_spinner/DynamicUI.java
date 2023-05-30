@@ -8,11 +8,13 @@ import androidx.core.content.ContextCompat;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -22,6 +24,7 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,12 +45,15 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -77,6 +83,7 @@ public class DynamicUI extends AppCompatActivity {
     Uri documentUri;
     String strMappingId = "";
     ImageView imageView, imageView1;
+    TextView document_path;
     String status = "", strEDT = "";
     EditText edtFile;
     int desiredId;
@@ -92,7 +99,7 @@ public class DynamicUI extends AppCompatActivity {
 
     String filePath;
     String[] selectionArgs;
-
+    Button saveButton , showButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,14 +118,18 @@ public class DynamicUI extends AppCompatActivity {
 
         columnLayout = findViewById(R.id.columnLayout);
 
-        Button saveButton = findViewById(R.id.saveButton);
-        saveButton.setOnClickListener(v -> saveData(tableName, columns));
+         saveButton = findViewById(R.id.saveButton);
+        saveButton.setOnClickListener(v -> getColumns());
 
-        Button showButton = findViewById(R.id.showButton);
+
+         showButton = findViewById(R.id.showButton);
         showButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getColumns();
+
+                Intent intent = new Intent(DynamicUI.this, ShowData.class);
+
+                startActivity(intent);
             }
         });
 
@@ -197,7 +208,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(editText);
 
-                    } else if ((subType.equalsIgnoreCase("INTEGER") || subType.equalsIgnoreCase("FLOAT") || subType.equalsIgnoreCase("DOUBLE")) && IsSelected.equalsIgnoreCase("Yes")) {
+                    }
+
+                    else if ((subType.equalsIgnoreCase("INTEGER") || subType.equalsIgnoreCase("FLOAT") || subType.equalsIgnoreCase("DOUBLE")) && IsSelected.equalsIgnoreCase("Yes")) {
                         int id = cursor.getInt(idIndex);
 
                         TextView columnNameTextView = new TextView(this);
@@ -243,7 +256,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(selectValues);
 
-                    } else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("No")) {
+                    }
+
+                    else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("No")) {
 
                         int id = cursor.getInt(idIndex);
 
@@ -283,7 +298,9 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(editText);
-                    } else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("Yes")) {
+                    }
+
+                    else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("Yes")) {
 
                         int id = cursor.getInt(idIndex);
 
@@ -327,7 +344,9 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(selectValues);
-                    } else if (subType.equalsIgnoreCase("IMAGE") || subType.equalsIgnoreCase("VIDEO") || subType.equalsIgnoreCase("PDF") || subType.equalsIgnoreCase("EXCEL")) {
+                    }
+
+                    else if (subType.equalsIgnoreCase("IMAGE") || subType.equalsIgnoreCase("VIDEO") || subType.equalsIgnoreCase("PDF") || subType.equalsIgnoreCase("EXCEL")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -341,7 +360,7 @@ public class DynamicUI extends AppCompatActivity {
                         edtFile.setText("newfile");
                         edtFile.setVisibility(View.GONE);
                         Button chooseFileBTN = new Button(this);
-                        chooseFileBTN.setText("Choose Image");
+                        chooseFileBTN.setText("Choose File");
                         chooseFileBTN.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
@@ -350,15 +369,19 @@ public class DynamicUI extends AppCompatActivity {
                         });
 
 
-                        imageView = new ImageView(this);
-                        imageView.setImageResource(R.drawable.image);
-                        imageView.setLayoutParams(new LinearLayout.LayoutParams(212, 212));
-                        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-                        imageView.setVisibility(View.GONE);
+//                        imageView = new ImageView(this);
+//                        imageView.setImageResource(R.drawable.image);
+//                        imageView.setLayoutParams(new LinearLayout.LayoutParams(212, 212));
+//                        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+//                        imageView.setVisibility(View.GONE);
+
+                        document_path = new TextView(this);
+
+//                        imageView.setVisibility(View.GONE);
 
 
                         layout.addView(chooseFileBTN);
-                        layout.addView(imageView);
+                        layout.addView(document_path);
 
 
                         columnLayout.addView(columnNameTextView);
@@ -366,7 +389,9 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(layout);
 
-                    } else if (subType.equalsIgnoreCase("PICTURE")) {
+                    }
+
+                    else if (subType.equalsIgnoreCase("PICTURE")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -405,7 +430,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(layout);
 
 
-                    } else if (subType.equals("Audio") || subType.equals("AUDIO")) {
+                    }
+
+                    else if (subType.equals("Audio") || subType.equals("AUDIO")) {
 
                         LayoutInflater inflater = LayoutInflater.from(this);
                         View dynamicView = inflater.inflate(R.layout.dynamic_audio_view, null);
@@ -455,7 +482,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(dynamicView);
 
 
-                    } else if (subType.equals("LOCATION")) {
+                    }
+
+                    else if (subType.equals("LOCATION")) {
 
                         LayoutInflater inflater = LayoutInflater.from(this);
                         View dynamicView = inflater.inflate(R.layout.dynamic_location, null);
@@ -503,7 +532,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(dynamicView);
 
-                    } else {
+                    }
+
+                    else {
                         // Get the values from the cursor
                         int id = cursor.getInt(idIndex);
 
@@ -745,14 +776,46 @@ public class DynamicUI extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_PICK_DOCUMENT && resultCode == RESULT_OK) {
+
+
+
+
             documentUri = data.getData();
             strPathDoc = documentUri.toString();
-            imageView.setVisibility(View.VISIBLE);
-            imageView.setImageURI(documentUri);
-            editTextValues.add(strPathDoc);
-            createdValues.put("file", strPathDoc);
 
-            Toast.makeText(this, "" + strPathDoc, Toast.LENGTH_SHORT).show();
+            document_path.setVisibility(View.VISIBLE);
+            document_path.setText(documentUri.toString());
+//            imageView.setVisibility(View.VISIBLE);
+//            imageView.setImageURI(documentUri);
+
+            try {
+
+              if(documentUri.toString().contains("image") || documentUri.toString().contains("jpg") || documentUri.toString().contains("png")) {
+                  byte[] byteArray = compressImageUri(getApplicationContext(), documentUri, 800, 600, 80);
+                  editTextValues.add(Arrays.toString(byteArray));
+                  createdValues.put("file", Arrays.toString(byteArray));
+
+              }else {
+                  try {
+                      byte[] byteArray = convertUriToByteArray(this, documentUri);
+                      Log.d(TAG, "onActivityResult: "+byteArray.toString());
+                      editTextValues.add(Arrays.toString(byteArray));
+                      createdValues.put("file", Arrays.toString(byteArray));
+                      // Handle the byte array as needed (e.g., upload it, process it, etc.)
+                  } catch (IOException e) {
+                      e.printStackTrace();
+                      // Handle the error appropriately
+                  }
+
+
+              }
+                // Use the byte array as needed
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+
         } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
 
             Bundle extras = data.getExtras();
@@ -761,11 +824,13 @@ public class DynamicUI extends AppCompatActivity {
             imageView1.setImageBitmap(imageBitmap);
 
             saveImageBitmap(imageBitmap);
-            editTextValues.add(strPicturePathCamera);
 
-            createdValues.put("Camera", strPicturePathCamera);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            imageBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
 
-            Toast.makeText(this, "" + strPicturePathCamera, Toast.LENGTH_SHORT).show();
+            editTextValues.add(Arrays.toString(byteArray));
+            createdValues.put("Camera", Arrays.toString(byteArray));
 
 
         } else if (requestCode == REQUEST_CODE_CREATE_FILE && resultCode == RESULT_OK) {
@@ -806,12 +871,10 @@ public class DynamicUI extends AppCompatActivity {
     }
 
 
-    private void saveData(String tableName, String[] columns) {
-
-
-    }
-
     private void getColumns() {
+
+      showButton.setVisibility(View.VISIBLE);
+
 
         editTextValues.clear();
 
@@ -822,16 +885,8 @@ public class DynamicUI extends AppCompatActivity {
         }
         Log.d(TAG, "getColumns: " + editTextValues);
 
-        Toast.makeText(this, "" + columnNames.toString() + editTextValues.toString(), Toast.LENGTH_SHORT).show();
-
 
         insertColumnName(columnNames, editTextValues);
-
-        Intent intent = new Intent(DynamicUI.this, ShowData.class);
-        intent.putStringArrayListExtra("column_name", columnNames);
-        intent.putStringArrayListExtra("column_values", (ArrayList<String>) editTextValues);
-        intent.putExtra("table_id", tableId);
-        startActivity(intent);
 
 
 //       insertColumnValues(editTextValues);
@@ -882,5 +937,47 @@ public class DynamicUI extends AppCompatActivity {
 
     }
 
+
+    public byte[] compressImageUri(Context context, Uri imageUri, int maxWidth, int maxHeight, int quality) throws IOException {
+        InputStream inputStream = context.getContentResolver().openInputStream(imageUri);
+        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+
+        // Calculate the new dimensions while maintaining the aspect ratio
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        float scaleRatio = Math.min((float) maxWidth / width, (float) maxHeight / height);
+        int newWidth = (int) (width * scaleRatio);
+        int newHeight = (int) (height * scaleRatio);
+
+        // Create the scaled bitmap
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+
+        // Compress the scaled bitmap to a byte array
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, byteArrayOutputStream);
+
+        // Release resources
+        inputStream.close();
+        bitmap.recycle();
+        scaledBitmap.recycle();
+
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private byte[] convertUriToByteArray(Context context, Uri uri) throws IOException {
+        InputStream inputStream = context.getContentResolver().openInputStream(uri);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            byteArrayOutputStream.write(buffer, 0, bytesRead);
+        }
+
+        byteArrayOutputStream.close();
+        inputStream.close();
+
+        return byteArrayOutputStream.toByteArray();
+    }
 
 }

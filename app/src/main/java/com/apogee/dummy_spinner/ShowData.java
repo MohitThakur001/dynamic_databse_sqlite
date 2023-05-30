@@ -17,11 +17,12 @@ import java.util.List;
 public class ShowData extends AppCompatActivity {
 
     private ExternalDatabaseHelper mDatabaseHelper;
-
+    private SQLiteDatabase database;
     List<String> data = new ArrayList<>();
     ListView listView;
-    private SQLiteDatabase database;
+
     String mapping_id;
+    ShowdataAdapter customAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,12 +36,19 @@ public class ShowData extends AppCompatActivity {
 
         // Retrieve table names and their column count
         List<String> tableList = getTableList();
+        List<String> tableids = getTableIds();
+
 
         // Display the table names in a ListView
         listView = findViewById(R.id.list);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, tableList);
-        listView.setAdapter(adapter);
+
+
+        customAdapter = new ShowdataAdapter(ShowData.this,R.layout.dynamic_showdata,tableList,tableids);
+        listView.setAdapter(customAdapter);
+
+//        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, tableList);
+//        listView.setAdapter(adapter);
 
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -56,6 +64,7 @@ public class ShowData extends AppCompatActivity {
 
     private List<String> getTableList() {
         List<String> tableList = new ArrayList<>();
+
         Cursor cursor = database.rawQuery("SELECT * FROM Form", null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
@@ -66,11 +75,29 @@ public class ShowData extends AppCompatActivity {
 
                 int ColumnCount = getTableColumnCount(formId);
 
-                tableList.add(formId + " (Form Name : " + formName + ")" + "\n" + "(Column Count : " + ColumnCount);
+                tableList.add("Form Name : " + formName +  "\n" + "Total Columns Created : " + ColumnCount);
+
             }
             cursor.close();
         }
         return tableList;
+    }
+    private List<String> getTableIds() {
+
+        List<String> tableids = new ArrayList<>();
+        Cursor cursor = database.rawQuery("SELECT * FROM Form", null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+
+
+                int formId = cursor.getInt(cursor.getColumnIndex("form_id"));
+
+                tableids.add(String.valueOf(formId));
+//                tableList.add(formId + " (Form Name : " + formName + ")" + "\n" + "(Column Count : " + ColumnCount);
+            }
+            cursor.close();
+        }
+        return tableids;
     }
 
     private int getTableColumnCount(int formId) {
@@ -99,8 +126,6 @@ public class ShowData extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         // Close the database
-        if (database != null) {
-            database.close();
-        }
+
     }
 }
