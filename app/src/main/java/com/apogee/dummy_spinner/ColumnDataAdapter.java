@@ -53,8 +53,7 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
     private Activity activity;
 
 
-
-    public ColumnDataAdapter(List<ColumnData> columnDataList,  Activity activity, Context context, List<String> subTypeList) {
+    public ColumnDataAdapter(List<ColumnData> columnDataList, Activity activity, Context context, List<String> subTypeList) {
         this.columnDataList = columnDataList;
         this.subTypeList = subTypeList;
         this.context = context;
@@ -109,7 +108,6 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
                     View dialogView = inflater.inflate(R.layout.webview, null);
 
 
-
                     // Build the custom AlertDialog
                     AlertDialog.Builder builder = new AlertDialog.Builder(context);
                     builder.setView(dialogView);
@@ -154,7 +152,7 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
                                 .fitEachPage(false) // fit each page to the view, else smaller pages are scaled relative to largest page.
                                 .pageSnap(false) // snap pages to screen boundaries
                                 .pageFling(false) // make a fling change only a single page like ViewPager
-                                .nightMode(true)
+                                .nightMode(false)
                                 .load();
                     }
                     // Show the custom dialog
