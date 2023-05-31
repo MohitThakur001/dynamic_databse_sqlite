@@ -56,16 +56,22 @@
             android:id="@+id/img"
             android:visibility="gone"/>
 
-        <com.github.barteksc.pdfviewer.PDFView
-            android:id="@+id/pdfView"
+
+        <Button
+            android:id="@+id/pdf"
+            android:layout_width="match_parent"
+            android:text="Show PDF"
             android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent"/>
+
+
 
 
     </LinearLayout>
 
 
     </RelativeLayout>
+
+
 
 </androidx.cardview.widget.CardView>

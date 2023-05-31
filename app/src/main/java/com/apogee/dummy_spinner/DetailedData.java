@@ -32,13 +32,13 @@ public class DetailedData extends AppCompatActivity {
 
         subTypeList = getIntent().getStringArrayListExtra("column_type");
 
-        Log.d(TAG, "onCreate: "+subTypeList);
+        Log.d(TAG, "onCreate: " + subTypeList);
 
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         columnDataList = new ArrayList<>();
-        columnDataAdapter = new ColumnDataAdapter(columnDataList,this,subTypeList);
+        columnDataAdapter = new ColumnDataAdapter(columnDataList, this, this,subTypeList );
         recyclerView.setAdapter(columnDataAdapter);
 
         mDatabaseHelper = new ExternalDatabaseHelper(this);
@@ -46,10 +46,9 @@ public class DetailedData extends AppCompatActivity {
         database = mDatabaseHelper.getReadableDatabase();
 
         // Replace "your_table_name" with your actual table name
-        String query = "SELECT column_name,column_value FROM ShowData Where form_id = "+ formId+" ";
+        String query = "SELECT column_name,column_value FROM ShowData Where form_id = " + formId + " ";
 
         Cursor cursor = database.rawQuery(query, null);
-
 
 
         while (cursor.moveToNext()) {

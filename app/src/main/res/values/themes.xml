@@ -4,6 +4,9 @@
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
-
+    <style name="PDFViewerTheme" parent="Theme.AppCompat.Light">
+        <item name="android:windowBackground">#fff</item>
+        <!-- Customize other attributes as needed -->
+    </style>
     <style name="Theme.Dummy_spinner" parent="Base.Theme.Dummy_spinner" />
 </resources>

@@ -59,6 +59,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
 
 public class DynamicUI extends AppCompatActivity {
 
@@ -99,7 +101,8 @@ public class DynamicUI extends AppCompatActivity {
 
     String filePath;
     String[] selectionArgs;
-    Button saveButton , showButton;
+    Button saveButton, showButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,18 +121,16 @@ public class DynamicUI extends AppCompatActivity {
 
         columnLayout = findViewById(R.id.columnLayout);
 
-         saveButton = findViewById(R.id.saveButton);
+        saveButton = findViewById(R.id.saveButton);
         saveButton.setOnClickListener(v -> getColumns());
 
 
-         showButton = findViewById(R.id.showButton);
+        showButton = findViewById(R.id.showButton);
         showButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                getColumns();
 
-                Intent intent = new Intent(DynamicUI.this, ShowData.class);
-
-                startActivity(intent);
             }
         });
 
@@ -208,9 +209,7 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(editText);
 
-                    }
-
-                    else if ((subType.equalsIgnoreCase("INTEGER") || subType.equalsIgnoreCase("FLOAT") || subType.equalsIgnoreCase("DOUBLE")) && IsSelected.equalsIgnoreCase("Yes")) {
+                    } else if ((subType.equalsIgnoreCase("INTEGER") || subType.equalsIgnoreCase("FLOAT") || subType.equalsIgnoreCase("DOUBLE")) && IsSelected.equalsIgnoreCase("Yes")) {
                         int id = cursor.getInt(idIndex);
 
                         TextView columnNameTextView = new TextView(this);
@@ -256,9 +255,7 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(selectValues);
 
-                    }
-
-                    else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("No")) {
+                    } else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("No")) {
 
                         int id = cursor.getInt(idIndex);
 
@@ -298,9 +295,7 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(editText);
-                    }
-
-                    else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("Yes")) {
+                    } else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("Yes")) {
 
                         int id = cursor.getInt(idIndex);
 
@@ -344,9 +339,7 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(selectValues);
-                    }
-
-                    else if (subType.equalsIgnoreCase("IMAGE") || subType.equalsIgnoreCase("VIDEO") || subType.equalsIgnoreCase("PDF") || subType.equalsIgnoreCase("EXCEL")) {
+                    } else if (subType.equalsIgnoreCase("IMAGE") || subType.equalsIgnoreCase("VIDEO") || subType.equalsIgnoreCase("PDF") || subType.equalsIgnoreCase("EXCEL")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -389,9 +382,7 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(layout);
 
-                    }
-
-                    else if (subType.equalsIgnoreCase("PICTURE")) {
+                    } else if (subType.equalsIgnoreCase("PICTURE")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -430,9 +421,7 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(layout);
 
 
-                    }
-
-                    else if (subType.equals("Audio") || subType.equals("AUDIO")) {
+                    } else if (subType.equals("Audio") || subType.equals("AUDIO")) {
 
                         LayoutInflater inflater = LayoutInflater.from(this);
                         View dynamicView = inflater.inflate(R.layout.dynamic_audio_view, null);
@@ -482,9 +471,7 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(dynamicView);
 
 
-                    }
-
-                    else if (subType.equals("LOCATION")) {
+                    } else if (subType.equals("LOCATION")) {
 
                         LayoutInflater inflater = LayoutInflater.from(this);
                         View dynamicView = inflater.inflate(R.layout.dynamic_location, null);
@@ -532,9 +519,7 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(dynamicView);
 
-                    }
-
-                    else {
+                    } else {
                         // Get the values from the cursor
                         int id = cursor.getInt(idIndex);
 
@@ -778,8 +763,6 @@ public class DynamicUI extends AppCompatActivity {
         if (requestCode == REQUEST_PICK_DOCUMENT && resultCode == RESULT_OK) {
 
 
-
-
             documentUri = data.getData();
             strPathDoc = documentUri.toString();
 
@@ -790,30 +773,25 @@ public class DynamicUI extends AppCompatActivity {
 
             try {
 
-              if(documentUri.toString().contains("image") || documentUri.toString().contains("jpg") || documentUri.toString().contains("png")) {
-                  byte[] byteArray = compressImageUri(getApplicationContext(), documentUri, 800, 600, 80);
-                  editTextValues.add(Arrays.toString(byteArray));
-                  createdValues.put("file", Arrays.toString(byteArray));
+                if (documentUri.toString().contains("image") || documentUri.toString().contains("jpg") || documentUri.toString().contains("png")) {
+                    byte[] byteArray = compressImageUri(getApplicationContext(), documentUri, 800, 600, 80);
+                    editTextValues.add(Arrays.toString(byteArray));
+                    createdValues.put("file", Arrays.toString(byteArray));
 
-              }else {
-                  try {
-                      byte[] byteArray = convertUriToByteArray(this, documentUri);
-                      Log.d(TAG, "onActivityResult: "+byteArray.toString());
-                      editTextValues.add(Arrays.toString(byteArray));
-                      createdValues.put("file", Arrays.toString(byteArray));
-                      // Handle the byte array as needed (e.g., upload it, process it, etc.)
-                  } catch (IOException e) {
-                      e.printStackTrace();
-                      // Handle the error appropriately
-                  }
+                } else {
+//                    byte[] pdfBytes = convertUriToByteArray(documentUri);
+                    String base64String = getBase64FromPdfUri(documentUri);
+
+                    editTextValues.add(base64String);
+                    createdValues.put("pdf", base64String);
+                    // Handle the byte array as needed (e.g., upload it, process it, etc.)
 
 
-              }
+                }
                 // Use the byte array as needed
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
 
 
         } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
@@ -873,7 +851,7 @@ public class DynamicUI extends AppCompatActivity {
 
     private void getColumns() {
 
-      showButton.setVisibility(View.VISIBLE);
+        showButton.setVisibility(View.VISIBLE);
 
 
         editTextValues.clear();
@@ -933,7 +911,9 @@ public class DynamicUI extends AppCompatActivity {
         dbm.insert(tableName, null, valuesMap);
 
         Toast.makeText(this, "Data Inserted Successfully", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(DynamicUI.this, ShowData.class);
 
+        startActivity(intent);
 
     }
 
@@ -964,20 +944,38 @@ public class DynamicUI extends AppCompatActivity {
         return byteArrayOutputStream.toByteArray();
     }
 
-    private byte[] convertUriToByteArray(Context context, Uri uri) throws IOException {
+    private String compressAndConvertToBase64(Context context, Uri uri) throws IOException {
         InputStream inputStream = context.getContentResolver().openInputStream(uri);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
+        // Compress the PDF content
         byte[] buffer = new byte[1024];
         int bytesRead;
         while ((bytesRead = inputStream.read(buffer)) != -1) {
-            byteArrayOutputStream.write(buffer, 0, bytesRead);
+            outputStream.write(buffer, 0, bytesRead);
         }
-
-        byteArrayOutputStream.close();
+        outputStream.close();
         inputStream.close();
 
-        return byteArrayOutputStream.toByteArray();
+        byte[] compressedBytes = outputStream.toByteArray();
+
+        // Convert the compressed bytes to base64
+        String base64String = Base64.encodeToString(compressedBytes, Base64.DEFAULT);
+        return base64String;
     }
 
+
+    private String getBase64FromPdfUri(Uri pdfUri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(pdfUri);
+            byte[] pdfBytes = new byte[inputStream.available()];
+            inputStream.read(pdfBytes);
+            inputStream.close();
+
+            return Base64.encodeToString(pdfBytes, Base64.DEFAULT);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
