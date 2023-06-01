@@ -2,8 +2,6 @@ package com.apogee.dummy_spinner;
 
 import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
@@ -22,6 +20,8 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         showtable.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent  intent = new Intent(MainActivity.this,ShowData.class);
+                Intent intent = new Intent(MainActivity.this, ShowData.class);
                 startActivity(intent);
             }
         });

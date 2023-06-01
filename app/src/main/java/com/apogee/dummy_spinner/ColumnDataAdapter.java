@@ -1,16 +1,14 @@
 package com.apogee.dummy_spinner;
 
-import static android.app.Activity.RESULT_OK;
 import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
 import android.app.Activity;
-import android.app.Dialog;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.util.Base64;
 import android.util.DisplayMetrics;
@@ -18,16 +16,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -36,14 +28,20 @@ import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.zip.ZipInputStream;
+
+import pl.droidsonroids.gif.GifImageView;
 
 public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.ViewHolder> implements OnLoadCompleteListener, OnPageChangeListener {
     private List<ColumnData> columnDataList;
@@ -79,7 +77,7 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
         if ((subtypeListValue.equals("IMAGE") || subtypeListValue.equals("PICTURE")) && value.contains("[")) {
 
             holder.columnValueTextView.setVisibility(View.GONE);
-            holder.pdf.setVisibility(View.GONE);
+            holder.doc.setVisibility(View.GONE);
 
             holder.img.setVisibility(View.VISIBLE);
 
@@ -89,6 +87,41 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
             Bitmap bmp = convertByteArrayToBitmap(imageByteArray);
 
             holder.img.setImageBitmap(bmp);
+            holder.img.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    // Get the drawable from the ImageView
+                    BitmapDrawable drawable = (BitmapDrawable) holder.img.getDrawable();
+                    Bitmap imageBitmap = drawable.getBitmap();
+
+
+                    DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+                    int screenWidth = displayMetrics.widthPixels;
+                    int screenHeight = displayMetrics.heightPixels;
+                    int desiredWidth = (int) (screenWidth * 0.8);
+                    int desiredHeight = (int) (screenHeight * 0.8);
+
+                    // Create an AlertDialog with a custom view containing an ImageView
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+
+                    ImageView alertDialogImageView = new ImageView(context);
+
+                    alertDialogImageView.setImageBitmap(imageBitmap);
+                    alertDialogImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+                    builder.setView(alertDialogImageView)
+                            .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    AlertDialog alertDialog = builder.create();
+                    alertDialog.getWindow().setLayout(desiredWidth, desiredHeight);
+                    alertDialog.show();
+                }
+            });
 
 
         } else if (subtypeListValue.equals("PDF")) {
@@ -96,16 +129,16 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
             holder.columnValueTextView.setVisibility(View.GONE);
 
             holder.img.setVisibility(View.GONE);
-            holder.pdf.setVisibility(View.VISIBLE);
+            holder.doc.setVisibility(View.VISIBLE);
 
             Uri uri = Uri.parse(value);
 
-            holder.pdf.setOnClickListener(new View.OnClickListener() {
+            holder.doc.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
 
                     LayoutInflater inflater = LayoutInflater.from(context);
-                    View dialogView = inflater.inflate(R.layout.webview, null);
+                    View dialogView = inflater.inflate(R.layout.pdf_viewer, null);
 
 
                     // Build the custom AlertDialog
@@ -147,7 +180,6 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
                                 // spacing between pages in dp. To define spacing color, set view background
                                 .spacing(0)
                                 .autoSpacing(false) // add dynamic spacing to fit each page on its own on the screen
-
                                 .pageFitPolicy(FitPolicy.WIDTH) // mode to fit pages in the view
                                 .fitEachPage(false) // fit each page to the view, else smaller pages are scaled relative to largest page.
                                 .pageSnap(false) // snap pages to screen boundaries
@@ -168,9 +200,87 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
 //            holder.pdf.loadData(pdfData, "application/pdf", "base64");
 
 
+        } else if (subtypeListValue.equals("EXCEL")) {
+
+
+            holder.columnValueTextView.setVisibility(View.GONE);
+
+            holder.img.setVisibility(View.GONE);
+            holder.doc.setVisibility(View.VISIBLE);
+
+            holder.doc.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+
+                    LayoutInflater inflater = LayoutInflater.from(context);
+                    View dialogView = inflater.inflate(R.layout.excel_viewer, null);
+
+
+                    // Build the custom AlertDialog
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                    builder.setView(dialogView);
+                    AlertDialog dialog = builder.create();
+                    Uri uri = Uri.parse(value);
+
+                    TextView excel_viewer = dialogView.findViewById(R.id.excel_viewer);
+
+
+                    DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+
+                    int screenWidth = displayMetrics.widthPixels;
+                    int screenHeight = displayMetrics.heightPixels;
+
+                    int buttonWidth = (int) (screenWidth * 0.85);
+                    int buttonHeight = (int) (screenHeight * 0.85);
+
+                    // Set the button width and height to match the screen dimensions
+                    excel_viewer.getLayoutParams().width = buttonWidth;
+                    excel_viewer.getLayoutParams().height = buttonHeight;
+
+                    String excelContent = readExcelFile(context, uri);
+
+                    excel_viewer.setText(excelContent);
+
+                    Log.d(TAG, "onClick: " + excelContent);
+
+
+                    dialog.show();
+                }
+            });
+
+
+        } else if (subtypeListValue.equals("AUDIO")) {
+
+
+            holder.columnValueTextView.setVisibility(View.GONE);
+
+            holder.img.setVisibility(View.GONE);
+            holder.doc.setVisibility(View.GONE);
+            holder.playButton.setVisibility(View.VISIBLE);
+
+            holder.playButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+
+                    MediaPlayer mediaPlayer = new MediaPlayer();
+                    try {
+                        mediaPlayer.setDataSource(value);
+                        mediaPlayer.prepare();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    // Play the recording
+                    mediaPlayer.start();
+                }
+            });
+
+
         } else {
             holder.img.setVisibility(View.GONE);
-            holder.pdf.setVisibility(View.GONE);
+            holder.doc.setVisibility(View.GONE);
 
 
             Log.d(TAG, "onBindViewHolder: " + value);
@@ -225,11 +335,12 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
 
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView columnNameTextView;
         public TextView columnValueTextView;
         public ImageView img;
-        public Button pdf;
+        public Button doc;
+        public GifImageView playButton;
 
 
         public ViewHolder(View itemView) {
@@ -237,32 +348,41 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
             columnNameTextView = itemView.findViewById(R.id.columnNameTextView);
             columnValueTextView = itemView.findViewById(R.id.columnValueTextView);
             img = itemView.findViewById(R.id.img);
-            pdf = itemView.findViewById(R.id.pdf);
+            doc = itemView.findViewById(R.id.pdf);
+            playButton = itemView.findViewById(R.id.playButton);
+
 
         }
     }
 
-    private byte[] decompressByteArray(byte[] compressedBytes) {
-        byte[] decompressedByteArray = null;
+    private String readExcelFile(Context context, Uri excelUri) {
+        StringBuilder contentBuilder = new StringBuilder();
         try {
-            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(compressedBytes);
-            ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
-            zipInputStream.getNextEntry();
+            InputStream inputStream = context.getContentResolver().openInputStream(excelUri);
+            Workbook workbook = new XSSFWorkbook(inputStream);
+            Sheet sheet = workbook.getSheetAt(0); // Assuming the first sheet
 
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = zipInputStream.read(buffer)) != -1) {
-                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            for (Row row : sheet) {
+                for (Cell cell : row) {
+                    CellType cellType = cell.getCellType();
+                    if (cellType == CellType.STRING) {
+                        contentBuilder.append(cell.getStringCellValue());
+                    } else if (cellType == CellType.NUMERIC) {
+                        contentBuilder.append(cell.getNumericCellValue());
+                    } else if (cellType == CellType.BOOLEAN) {
+                        contentBuilder.append(cell.getBooleanCellValue());
+                    }
+                    contentBuilder.append("\t"); // Separate cells with a tab
+                }
+                contentBuilder.append("\n"); // Separate rows with a new line
             }
 
-            zipInputStream.close();
-            byteArrayOutputStream.close();
-            decompressedByteArray = byteArrayOutputStream.toByteArray();
+            workbook.close();
+            inputStream.close();
         } catch (IOException e) {
-            Log.e("MainActivity", "Error decompressing byte array: " + e.getMessage());
+            e.printStackTrace();
         }
-        return decompressedByteArray;
+        return contentBuilder.toString();
     }
 
 

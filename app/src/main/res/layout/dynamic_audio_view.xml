@@ -1,31 +1,31 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:orientation="vertical"
+
+    android:layout_height="80dp">
 
 
-    android:layout_height="wrap_content">
-
-    <Button
+    <ImageButton
         android:id="@+id/recordButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="Record" />
-
-    <Button
-        android:id="@+id/stopButton"
+        android:src="@drawable/baseline_mic_24"
+        android:background="@android:color/transparent"
+        android:layout_centerInParent="true" />
+    <!-- Timer -->
+    <Chronometer
+        android:id="@+id/chronometer"
         android:layout_width="wrap_content"
-        android:layout_gravity="center"
         android:layout_height="wrap_content"
-        android:text="Stop" />
-
-    <Button
-        android:id="@+id/saveButton"
-        android:layout_width="wrap_content"
         android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:text="Save" />
 
+        android:textSize="24sp"
+        android:layout_centerInParent="true"
+     />
+
+    <!-- Record Button -->
+
+
+    <!-- Other UI elements as per your requirements -->
 
 </LinearLayout>

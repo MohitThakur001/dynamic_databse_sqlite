@@ -10,68 +10,68 @@
         android:layout_height="wrap_content">
 
 
-
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:orientation="vertical"
-        android:padding="10dp">
-
-
-
-        <TextView
-            android:id="@+id/columnNameTextView"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-
-            android:textSize="14sp" />
-
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:orientation="vertical"
-        android:padding="10dp">
+            android:layout_alignParentLeft="true"
+            android:orientation="vertical"
+            android:padding="10dp">
 
 
+            <TextView
+                android:id="@+id/columnNameTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textSize="14sp" />
 
 
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/columnValueTextView"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp" />
+            android:layout_alignParentRight="true"
+            android:orientation="vertical"
+            android:padding="10dp">
 
 
-        <ImageView
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:id="@+id/img"
-            android:visibility="gone"/>
+            <TextView
+                android:id="@+id/columnValueTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="14sp" />
 
 
-        <Button
-            android:id="@+id/pdf"
-            android:layout_width="match_parent"
-            android:text="Show PDF"
-            android:visibility="gone"
-            android:layout_height="match_parent"/>
+            <ImageView
+                android:id="@+id/img"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:visibility="gone" />
 
 
+            <Button
+                android:id="@+id/pdf"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="View file"
+                android:visibility="gone" />
 
 
-    </LinearLayout>
+            <pl.droidsonroids.gif.GifImageView
+                android:id="@+id/playButton"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/microphone"
+                android:visibility="gone" />
+
+
+        </LinearLayout>
 
 
     </RelativeLayout>
-
 
 
 </androidx.cardview.widget.CardView>

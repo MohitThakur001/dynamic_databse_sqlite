@@ -1,9 +1,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:orientation="vertical"
+    android:layout_height="match_parent"
     android:layout_gravity="center"
     android:gravity="center"
-    android:layout_height="match_parent">
+    android:orientation="vertical">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -11,48 +11,47 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:orientation="vertical"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
-            android:layout_height="wrap_content">
+            android:orientation="vertical">
 
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="Enter Details"
                 android:textColor="@color/black"
-                android:textStyle="bold"
                 android:textSize="18dp"
-                android:text="Enter Details"/>
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:id="@+id/columnLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/border"
                 android:layout_margin="15dp"
+                android:background="@drawable/border"
                 android:orientation="vertical"
                 android:padding="16dp">
 
             </LinearLayout>
 
             <Button
+                android:id="@+id/saveButton"
                 android:layout_width="match_parent"
-                android:layout_margin="20dp"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
+                android:layout_margin="20dp"
                 android:text="Save Data"
-                android:id="@+id/saveButton"/>
-
+                android:visibility="gone" />
 
 
             <Button
+                android:id="@+id/showButton"
                 android:layout_width="match_parent"
-                android:layout_margin="20dp"
                 android:layout_height="wrap_content"
 
-                android:text="Save &amp; Show Data"
-                android:id="@+id/showButton"/>
+                android:layout_margin="20dp"
+                android:text="Save &amp; Show Data" />
 
 
         </LinearLayout>

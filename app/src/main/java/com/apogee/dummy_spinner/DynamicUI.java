@@ -2,10 +2,7 @@ package com.apogee.dummy_spinner;
 
 import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -20,6 +17,7 @@ import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputType;
@@ -32,12 +30,18 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -47,7 +51,6 @@ import com.google.android.gms.location.LocationServices;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,14 +62,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
 
 public class DynamicUI extends AppCompatActivity {
 
     private FusedLocationProviderClient fusedLocationClient;
+    Chronometer chronometer;
     private LocationCallback locationCallback;
     private static final int REQUEST_PERMISSION = 200;
+    private static final int PICK_EXCEL_REQUEST_CODE = 3;
     private static final int REQUEST_CODE_CREATE_FILE = 201;
     private boolean isRecording = false;
     private MediaRecorder mediaRecorder;
@@ -82,10 +85,11 @@ public class DynamicUI extends AppCompatActivity {
     private static final int REQUEST_PICK_DOCUMENT = 1;
     private Bitmap imageBitmap;
     int idIndex;
+    private String currentAudioPath;
     Uri documentUri;
     String strMappingId = "";
     ImageView imageView, imageView1;
-    TextView document_path;
+    TextView document_path, excelPath;
     String status = "", strEDT = "";
     EditText edtFile;
     int desiredId;
@@ -96,9 +100,11 @@ public class DynamicUI extends AppCompatActivity {
     String[] dataTypes = {"TEXT1", "TEXT2", "TEXT3", "TEXT4", "TEXT5", "TEXT6"};
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final int PDF_PICKER_REQUEST_CODE = 123;
+    private static final int PERMISSION_REQUEST_CODE = 1;
 
     TextView filePathTextView;
-
+    ImageButton recordButton;
     String filePath;
     String[] selectionArgs;
     Button saveButton, showButton;
@@ -107,6 +113,19 @@ public class DynamicUI extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dynamic_ui);
+
+
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE},
+                    PERMISSION_REQUEST_CODE);
+        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        }
 
 
         Intent intent = getIntent();
@@ -339,7 +358,7 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(selectValues);
-                    } else if (subType.equalsIgnoreCase("IMAGE") || subType.equalsIgnoreCase("VIDEO") || subType.equalsIgnoreCase("PDF") || subType.equalsIgnoreCase("EXCEL")) {
+                    } else if (subType.equalsIgnoreCase("IMAGE") || subType.equalsIgnoreCase("VIDEO")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -353,11 +372,52 @@ public class DynamicUI extends AppCompatActivity {
                         edtFile.setText("newfile");
                         edtFile.setVisibility(View.GONE);
                         Button chooseFileBTN = new Button(this);
-                        chooseFileBTN.setText("Choose File");
+                        chooseFileBTN.setText("Choose Image");
                         chooseFileBTN.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
                                 dispatchTakePictureIntent();
+                            }
+                        });
+
+
+                        imageView = new ImageView(this);
+                        imageView.setImageResource(R.drawable.image);
+                        imageView.setLayoutParams(new LinearLayout.LayoutParams(212, 212));
+                        imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+                        imageView.setVisibility(View.GONE);
+
+//                        document_path = new TextView(this);
+
+//                        imageView.setVisibility(View.GONE);
+
+
+                        layout.addView(chooseFileBTN);
+                        layout.addView(imageView);
+
+
+                        columnLayout.addView(columnNameTextView);
+                        columnLayout.addView(edtFile);
+
+                        columnLayout.addView(layout);
+
+                    } else if (subType.equalsIgnoreCase("PDF")) {
+
+                        TextView columnNameTextView = new TextView(this);
+                        columnNameTextView.setText(columnName);
+
+
+                        LinearLayout layout = new LinearLayout(this);
+                        layout.setOrientation(LinearLayout.VERTICAL);
+                        layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+
+                        Button chooseFileBTN = new Button(this);
+                        chooseFileBTN.setText("Choose PDF");
+                        chooseFileBTN.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                dispatchTakePDFIntent();
                             }
                         });
 
@@ -378,10 +438,9 @@ public class DynamicUI extends AppCompatActivity {
 
 
                         columnLayout.addView(columnNameTextView);
-                        columnLayout.addView(edtFile);
+
 
                         columnLayout.addView(layout);
-
                     } else if (subType.equalsIgnoreCase("PICTURE")) {
 
                         TextView columnNameTextView = new TextView(this);
@@ -421,6 +480,45 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(layout);
 
 
+                    } else if (subType.equalsIgnoreCase("EXCEL")) {
+
+                        TextView columnNameTextView = new TextView(this);
+                        columnNameTextView.setText(columnName);
+
+
+                        LinearLayout layout = new LinearLayout(this);
+                        layout.setOrientation(LinearLayout.VERTICAL);
+                        layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+
+                        Button chooseFileBTN = new Button(this);
+                        chooseFileBTN.setText("Choose File");
+                        chooseFileBTN.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                dispatchTakeExcelIntent();
+                            }
+                        });
+
+                        excelPath = new TextView(this);
+//                        imageView1 = new ImageView(this);
+//                        imageView1.setImageResource(R.drawable.image);
+//                        imageView1.setLayoutParams(new LinearLayout.LayoutParams(212, 212));
+//                        imageView1.setScaleType(ImageView.ScaleType.FIT_XY);
+//                        imageView1.setVisibility(View.GONE);
+//
+//                        Button saveFileBTN = new Button(this);
+//                        saveFileBTN.setText("Save Image");
+
+
+                        layout.addView(chooseFileBTN);
+                        layout.addView(excelPath);
+
+
+                        columnLayout.addView(columnNameTextView);
+                        columnLayout.addView(layout);
+
+
                     } else if (subType.equals("Audio") || subType.equals("AUDIO")) {
 
                         LayoutInflater inflater = LayoutInflater.from(this);
@@ -431,38 +529,22 @@ public class DynamicUI extends AppCompatActivity {
 
 
                         // Set up UI components
-                        Button recordButton = dynamicView.findViewById(R.id.recordButton);
-                        Button stopButton = dynamicView.findViewById(R.id.stopButton);
-                        Button saveButton = dynamicView.findViewById(R.id.saveButton);
+                        chronometer = dynamicView.findViewById(R.id.chronometer);
+                        recordButton = dynamicView.findViewById(R.id.recordButton);
+
 
                         // Disable the stop and save buttons initially
-                        stopButton.setEnabled(false);
-                        saveButton.setEnabled(false);
+
 
                         // Set click listeners for buttons
                         recordButton.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                if (isRecording) {
-                                    stopRecording();
-                                } else {
-                                    checkPermissions();
+                                if (mediaRecorder == null) {
                                     startRecording();
+                                } else {
+                                    stopRecording();
                                 }
-                            }
-                        });
-
-                        stopButton.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                stopRecording();
-                            }
-                        });
-
-                        saveButton.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                requestSavePermission();
                             }
                         });
 
@@ -578,35 +660,30 @@ public class DynamicUI extends AppCompatActivity {
 
     private void startRecording() {
 
-        mediaRecorder = new MediaRecorder();
-        audioFileUri = createAudioFileUri();
+        showButton.setVisibility(View.GONE);
 
-        if (audioFileUri != null) {
+        String fileName = "recording.3gp";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+        try {
+            File audioFile;
+            audioFile = File.createTempFile("AUDIO_", ".3gp", storageDir);
+            currentAudioPath = audioFile.getAbsolutePath();
+
+            mediaRecorder = new MediaRecorder();
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
             mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-            mediaRecorder.setOutputFile(audioFileUri.getPath());
+            mediaRecorder.setOutputFile(currentAudioPath);
 
-            try {
-                mediaRecorder.prepare();
-                mediaRecorder.start();
-                isRecording = true;
+            mediaRecorder.prepare();
+            mediaRecorder.start();
 
-                Button recordButton = findViewById(R.id.recordButton);
-                Button stopButton = findViewById(R.id.stopButton);
-                Button saveButton = findViewById(R.id.saveButton);
-                recordButton.setEnabled(false);
-                stopButton.setEnabled(true);
-                saveButton.setEnabled(false);
-
-                Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            Toast.makeText(this, "Failed to create audio file", Toast.LENGTH_SHORT).show();
+            chronometer.setBase(SystemClock.elapsedRealtime());
+            chronometer.start();
+            recordButton.setImageResource(R.drawable.baseline_mic_off_24);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
     }
 
     private void stopRecording() {
@@ -614,16 +691,21 @@ public class DynamicUI extends AppCompatActivity {
             mediaRecorder.stop();
             mediaRecorder.release();
             mediaRecorder = null;
-            isRecording = false;
 
-            Button stopButton = findViewById(R.id.stopButton);
-            Button saveButton = findViewById(R.id.saveButton);
-            stopButton.setEnabled(false);
-            saveButton.setEnabled(true);
+            chronometer.stop();
+            chronometer.setBase(SystemClock.elapsedRealtime());
 
-            Toast.makeText(this, "Recording stopped", Toast.LENGTH_SHORT).show();
+            recordButton.setImageResource(R.drawable.baseline_mic_24);
+
+            Toast.makeText(this, "Recorded Successfully", Toast.LENGTH_SHORT).show();
+            showButton.setVisibility(View.VISIBLE);
+
+            editTextValues.add(currentAudioPath);
+            createdValues.put("audio", currentAudioPath);
+
         }
     }
+
 
     private void requestSavePermission() {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -691,6 +773,12 @@ public class DynamicUI extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
             }
+        } else if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+            }
         } else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startLocationUpdates();
@@ -751,6 +839,23 @@ public class DynamicUI extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_PICK_DOCUMENT);
     }
 
+    private void dispatchTakePDFIntent() {
+
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/pdf");
+        startActivityForResult(intent, PDF_PICKER_REQUEST_CODE);
+    }
+
+    private void dispatchTakeExcelIntent() {
+
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(Intent.createChooser(intent, "Select Excel File"), PICK_EXCEL_REQUEST_CODE);
+
+    }
+
 
     private boolean isRecording() {
         return isRecording;
@@ -766,28 +871,18 @@ public class DynamicUI extends AppCompatActivity {
             documentUri = data.getData();
             strPathDoc = documentUri.toString();
 
-            document_path.setVisibility(View.VISIBLE);
-            document_path.setText(documentUri.toString());
-//            imageView.setVisibility(View.VISIBLE);
-//            imageView.setImageURI(documentUri);
+//            document_path.setVisibility(View.VISIBLE);
+//            document_path.setText(documentUri.toString());
+            imageView.setVisibility(View.VISIBLE);
+            imageView.setImageURI(documentUri);
 
             try {
 
-                if (documentUri.toString().contains("image") || documentUri.toString().contains("jpg") || documentUri.toString().contains("png")) {
-                    byte[] byteArray = compressImageUri(getApplicationContext(), documentUri, 800, 600, 80);
-                    editTextValues.add(Arrays.toString(byteArray));
-                    createdValues.put("file", Arrays.toString(byteArray));
-
-                } else {
-//                    byte[] pdfBytes = convertUriToByteArray(documentUri);
-                    String base64String = getBase64FromPdfUri(documentUri);
-
-                    editTextValues.add(base64String);
-                    createdValues.put("pdf", base64String);
-                    // Handle the byte array as needed (e.g., upload it, process it, etc.)
+                byte[] byteArray = compressImageUri(getApplicationContext(), documentUri, 800, 600, 80);
+                editTextValues.add(Arrays.toString(byteArray));
+                createdValues.put("file", Arrays.toString(byteArray));
 
 
-                }
                 // Use the byte array as needed
             } catch (IOException e) {
                 e.printStackTrace();
@@ -814,7 +909,42 @@ public class DynamicUI extends AppCompatActivity {
         } else if (requestCode == REQUEST_CODE_CREATE_FILE && resultCode == RESULT_OK) {
             audioFileUri = data.getData();
             saveRecording();
+        } else if (requestCode == PICK_EXCEL_REQUEST_CODE && resultCode == RESULT_OK) {
+
+            Uri excelUri = data.getData();
+            excelPath.setText(excelUri.toString());
+            editTextValues.add(String.valueOf(excelUri));
+            createdValues.put("Excel", String.valueOf(excelUri));
+
+
+        } else if (requestCode == PDF_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
+
+
+            documentUri = data.getData();
+            strPathDoc = documentUri.toString();
+
+
+            Log.d(TAG, "onActivityResult: doccc" + documentUri);
+
+            document_path.setVisibility(View.VISIBLE);
+            document_path.setText(documentUri.toString());
+//            imageView.setVisibility(View.VISIBLE);
+//            imageView.setImageURI(documentUri);
+
+
+//                    byte[] pdfBytes = convertUriToByteArray(documentUri);
+            String base64String = getBase64FromPdfUri(documentUri);
+
+            editTextValues.add(base64String);
+            createdValues.put("pdf", base64String);
+            // Handle the byte array as needed (e.g., upload it, process it, etc.)
+
+
+            // Use the byte array as needed
+
+
         }
+
     }
 
 
@@ -977,5 +1107,14 @@ public class DynamicUI extends AppCompatActivity {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mediaRecorder != null) {
+            mediaRecorder.release();
+            mediaRecorder = null;
+        }
     }
 }
