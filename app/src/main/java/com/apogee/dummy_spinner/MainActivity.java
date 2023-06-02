@@ -22,6 +22,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Room;
+
+import com.apogee.dummy_spinner.Database.MyDatabase;
+import com.apogee.dummy_spinner.Entities.ColumnTypeEntity;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,13 +46,19 @@ public class MainActivity extends AppCompatActivity {
     String isSelected = "";
     int count = 0;
     private List<View> columnRows;
-
+    private MyDatabase myDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+//        String databasePath = getApplicationContext().getDatabasePath("updateui.db").getPath();
+//
+//// Initialize the Room database instance by providing the custom database path
+//        myDatabase = Room.databaseBuilder(getApplicationContext(), MyDatabase.class, databasePath)
+//                .createFromAsset("databases/updateui.db")
+//                .build();
 
         tableNameEditText = findViewById(R.id.table_name_edit_text);
         showtable = findViewById(R.id.showtable);
@@ -206,6 +216,22 @@ public class MainActivity extends AppCompatActivity {
 
         dataListType.clear();
         dataListId.clear();
+
+
+
+//
+//// Perform database operations
+//        List<ColumnTypeEntity> columnTypes = myDatabase.columnTypeDao().getAllColumnTypes();
+//
+//        for (ColumnTypeEntity columnType : columnTypes) {
+//            int id = columnType.getId();
+//            String columnName = columnType.getTypeName();
+//
+//            dataListType.add(columnName);
+//            dataListId.add(id);
+//        }
+//
+
 
 
         mDatabaseHelper = new ExternalDatabaseHelper(this);

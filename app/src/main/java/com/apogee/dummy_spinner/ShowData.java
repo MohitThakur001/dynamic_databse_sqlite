@@ -1,15 +1,14 @@
 package com.apogee.dummy_spinner;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +42,7 @@ public class ShowData extends AppCompatActivity {
         listView = findViewById(R.id.list);
 
 
-
-        customAdapter = new ShowdataAdapter(ShowData.this,R.layout.dynamic_showdata,tableList,tableids);
+        customAdapter = new ShowdataAdapter(ShowData.this, R.layout.dynamic_showdata, tableList, tableids);
         listView.setAdapter(customAdapter);
 
 //        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, tableList);
@@ -75,13 +73,14 @@ public class ShowData extends AppCompatActivity {
 
                 int ColumnCount = getTableColumnCount(formId);
 
-                tableList.add("Form Name : " + formName +  "\n" + "Total Columns Created : " + ColumnCount);
+                tableList.add("Form Name : " + formName + "\n" + "Total Columns Created : " + ColumnCount);
 
             }
             cursor.close();
         }
         return tableList;
     }
+
     private List<String> getTableIds() {
 
         List<String> tableids = new ArrayList<>();
@@ -102,7 +101,7 @@ public class ShowData extends AppCompatActivity {
 
     private int getTableColumnCount(int formId) {
         int tableCount = 0;
-        Cursor cursor = database.rawQuery("SELECT * FROM FormMapping Where form_id = "+ formId+" ", null);
+        Cursor cursor = database.rawQuery("SELECT * FROM FormMapping Where form_id = " + formId + " ", null);
         if (cursor != null) {
             tableCount = cursor.getCount();
             cursor.close();

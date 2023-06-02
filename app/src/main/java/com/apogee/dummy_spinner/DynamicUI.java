@@ -38,6 +38,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -65,6 +66,7 @@ import java.util.Map;
 
 public class DynamicUI extends AppCompatActivity {
 
+    private static final int PICK_VIDEO_REQUEST = 7;
     private FusedLocationProviderClient fusedLocationClient;
     Chronometer chronometer;
     private LocationCallback locationCallback;
@@ -89,7 +91,7 @@ public class DynamicUI extends AppCompatActivity {
     Uri documentUri;
     String strMappingId = "";
     ImageView imageView, imageView1;
-    TextView document_path, excelPath;
+    TextView document_path, excelPath , videopath;
     String status = "", strEDT = "";
     EditText edtFile;
     int desiredId;
@@ -228,7 +230,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(editText);
 
-                    } else if ((subType.equalsIgnoreCase("INTEGER") || subType.equalsIgnoreCase("FLOAT") || subType.equalsIgnoreCase("DOUBLE")) && IsSelected.equalsIgnoreCase("Yes")) {
+                    }
+
+                    else if ((subType.equalsIgnoreCase("INTEGER") || subType.equalsIgnoreCase("FLOAT") || subType.equalsIgnoreCase("DOUBLE")) && IsSelected.equalsIgnoreCase("Yes")) {
                         int id = cursor.getInt(idIndex);
 
                         TextView columnNameTextView = new TextView(this);
@@ -274,7 +278,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(selectValues);
 
-                    } else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("No")) {
+                    }
+
+                    else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("No")) {
 
                         int id = cursor.getInt(idIndex);
 
@@ -314,7 +320,9 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(editText);
-                    } else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("Yes")) {
+                    }
+
+                    else if ((subType.equalsIgnoreCase("STRING")) && IsSelected.equalsIgnoreCase("Yes")) {
 
                         int id = cursor.getInt(idIndex);
 
@@ -358,7 +366,9 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(selectValues);
-                    } else if (subType.equalsIgnoreCase("IMAGE") || subType.equalsIgnoreCase("VIDEO")) {
+                    }
+
+                    else if (subType.equalsIgnoreCase("IMAGE")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -401,7 +411,44 @@ public class DynamicUI extends AppCompatActivity {
 
                         columnLayout.addView(layout);
 
-                    } else if (subType.equalsIgnoreCase("PDF")) {
+                    }
+
+                    else if (subType.equalsIgnoreCase("VIDEO")){
+
+                        TextView columnNameTextView = new TextView(this);
+                        columnNameTextView.setText(columnName);
+
+
+                        LinearLayout layout = new LinearLayout(this);
+                        layout.setOrientation(LinearLayout.VERTICAL);
+                        layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+
+                        Button chooseFileBTN = new Button(this);
+                        chooseFileBTN.setText("Choose Video");
+                        chooseFileBTN.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                dispatchTakeVideoIntent();
+                            }
+                        });
+
+
+
+                        videopath = new TextView(this);
+
+                        layout.addView(chooseFileBTN);
+                        layout.addView(videopath);
+
+
+                        columnLayout.addView(columnNameTextView);
+
+
+                        columnLayout.addView(layout);
+
+                    }
+
+                    else if (subType.equalsIgnoreCase("PDF")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -441,7 +488,9 @@ public class DynamicUI extends AppCompatActivity {
 
 
                         columnLayout.addView(layout);
-                    } else if (subType.equalsIgnoreCase("PICTURE")) {
+                    }
+
+                    else if (subType.equalsIgnoreCase("PICTURE")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -480,7 +529,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(layout);
 
 
-                    } else if (subType.equalsIgnoreCase("EXCEL")) {
+                    }
+
+                    else if (subType.equalsIgnoreCase("EXCEL")) {
 
                         TextView columnNameTextView = new TextView(this);
                         columnNameTextView.setText(columnName);
@@ -519,7 +570,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(layout);
 
 
-                    } else if (subType.equals("Audio") || subType.equals("AUDIO")) {
+                    }
+
+                    else if (subType.equals("Audio") || subType.equals("AUDIO")) {
 
                         LayoutInflater inflater = LayoutInflater.from(this);
                         View dynamicView = inflater.inflate(R.layout.dynamic_audio_view, null);
@@ -553,7 +606,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(dynamicView);
 
 
-                    } else if (subType.equals("LOCATION")) {
+                    }
+
+                    else if (subType.equals("LOCATION")) {
 
                         LayoutInflater inflater = LayoutInflater.from(this);
                         View dynamicView = inflater.inflate(R.layout.dynamic_location, null);
@@ -601,7 +656,9 @@ public class DynamicUI extends AppCompatActivity {
                         columnLayout.addView(columnNameTextView);
                         columnLayout.addView(dynamicView);
 
-                    } else {
+                    }
+
+                    else {
                         // Get the values from the cursor
                         int id = cursor.getInt(idIndex);
 
@@ -838,6 +895,13 @@ public class DynamicUI extends AppCompatActivity {
         intent.setType("*/*");
         startActivityForResult(intent, REQUEST_PICK_DOCUMENT);
     }
+       private void dispatchTakeVideoIntent() {
+
+           Intent intent = new Intent(Intent.ACTION_GET_CONTENT, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+           startActivityForResult(intent, PICK_VIDEO_REQUEST);
+
+       }
+
 
     private void dispatchTakePDFIntent() {
 
@@ -943,6 +1007,16 @@ public class DynamicUI extends AppCompatActivity {
             // Use the byte array as needed
 
 
+        }
+
+        if (requestCode == PICK_VIDEO_REQUEST && resultCode == RESULT_OK) {
+            if (data != null) {
+                Uri videoUri = data.getData();
+
+                videopath.setText(videoUri.toString());
+                editTextValues.add(String.valueOf(videoUri));
+                createdValues.put("video file", String.valueOf(videoUri));
+            }
         }
 
     }

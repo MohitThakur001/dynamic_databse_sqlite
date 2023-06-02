@@ -2,14 +2,14 @@ package com.apogee.dummy_spinner;
 
 import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,7 @@ public class DetailedData extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         columnDataList = new ArrayList<>();
-        columnDataAdapter = new ColumnDataAdapter(columnDataList, this, this,subTypeList );
+        columnDataAdapter = new ColumnDataAdapter(columnDataList, this, this, subTypeList);
         recyclerView.setAdapter(columnDataAdapter);
 
         mDatabaseHelper = new ExternalDatabaseHelper(this);

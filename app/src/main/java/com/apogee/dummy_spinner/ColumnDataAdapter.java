@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
@@ -243,6 +244,54 @@ public class ColumnDataAdapter extends RecyclerView.Adapter<ColumnDataAdapter.Vi
                     excel_viewer.setText(excelContent);
 
                     Log.d(TAG, "onClick: " + excelContent);
+
+
+                    dialog.show();
+                }
+            });
+
+
+        }else if (subtypeListValue.equals("VIDEO")) {
+
+
+            holder.columnValueTextView.setVisibility(View.GONE);
+
+            holder.img.setVisibility(View.GONE);
+            holder.doc.setVisibility(View.VISIBLE);
+
+            holder.doc.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+
+                    LayoutInflater inflater = LayoutInflater.from(context);
+                    View dialogView = inflater.inflate(R.layout.dynamic_video_view, null);
+
+
+                    // Build the custom AlertDialog
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                    builder.setView(dialogView);
+                    AlertDialog dialog = builder.create();
+                    Uri uri = Uri.parse(value);
+
+                    VideoView video_view = dialogView.findViewById(R.id.video_view);
+
+
+                    DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+
+                    int screenWidth = displayMetrics.widthPixels;
+                    int screenHeight = displayMetrics.heightPixels;
+
+                    int buttonWidth = (int) (screenWidth * 0.85);
+                    int buttonHeight = (int) (screenHeight * 0.85);
+
+                    // Set the button width and height to match the screen dimensions
+                    video_view.getLayoutParams().width = buttonWidth;
+                    video_view.getLayoutParams().height = buttonHeight;
+
+
+                    video_view.setVideoURI(uri);
+                    video_view.start();
 
 
                     dialog.show();
