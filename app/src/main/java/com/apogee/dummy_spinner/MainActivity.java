@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,11 +26,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
 import com.apogee.dummy_spinner.Database.MyDatabase;
+import com.apogee.dummy_spinner.Entities.ColumnSubtypeEntity;
 import com.apogee.dummy_spinner.Entities.ColumnTypeEntity;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,19 +48,18 @@ public class MainActivity extends AppCompatActivity {
     String isSelected = "";
     int count = 0;
     private List<View> columnRows;
-    private MyDatabase myDatabase;
+    public MyDatabase myDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        String databasePath = getApplicationContext().getDatabasePath("updateui.db").getPath();
-//
-//// Initialize the Room database instance by providing the custom database path
-//        myDatabase = Room.databaseBuilder(getApplicationContext(), MyDatabase.class, databasePath)
-//                .createFromAsset("databases/updateui.db")
-//                .build();
+         mDatabaseHelper = new ExternalDatabaseHelper(MainActivity.this);
+
+
+
+        myDatabase = MyDatabase.getInstance(this);
 
         tableNameEditText = findViewById(R.id.table_name_edit_text);
         showtable = findViewById(R.id.showtable);
@@ -95,6 +96,41 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private class DatabaseTaskType extends AsyncTask<Void, Void, List<String>> {
+        @Override
+        protected List<String> doInBackground(Void... voids) {
+
+            List<ColumnTypeEntity> columnTypes = myDatabase.columnTypeDao().getAllColumnTypes();
+
+            for (ColumnTypeEntity columnType : columnTypes) {
+                int id = columnType.getId();;
+                String columnName =columnType.getTypeName();;
+
+
+                dataListType.add(columnName);
+                dataListId.add(id);
+            }
+
+            return dataListType;
+        }
+    }
+
+    private class DatabaseTask extends AsyncTask<Integer, Void, List<String>> {
+        @Override
+        protected List<String> doInBackground(Integer... integers) {
+            int selectedOption = integers[0];
+
+            List<ColumnSubtypeEntity> columnSubtypes = myDatabase.columnSubtypeDao().getColumnSubtypes(selectedOption);
+
+            for (ColumnSubtypeEntity columnSubtype : columnSubtypes) {
+                String columnName = columnSubtype.getSubtypeName();
+                subDataListType.add(columnName);
+            }
+
+            return subDataListType;
+        }
     }
 
 
@@ -191,10 +227,19 @@ public class MainActivity extends AppCompatActivity {
                 }
 
 
-                List<String> subTypeOption = getSubTypeOptions(selectedOption);
-                subTypeAdapter.clear();
-                subTypeAdapter.addAll(subTypeOption);
-                subTypeAdapter.notifyDataSetChanged();
+                List<String> subTypeOption = null;
+                try {
+                    subTypeOption = getSubTypeOptions(selectedOption);
+
+                    subTypeAdapter.clear();
+                    subTypeAdapter.addAll(subTypeOption);
+                    subTypeAdapter.notifyDataSetChanged();
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
             }
 
             @Override
@@ -216,89 +261,24 @@ public class MainActivity extends AppCompatActivity {
 
         dataListType.clear();
         dataListId.clear();
-
-
-
-//
-//// Perform database operations
-//        List<ColumnTypeEntity> columnTypes = myDatabase.columnTypeDao().getAllColumnTypes();
-//
-//        for (ColumnTypeEntity columnType : columnTypes) {
-//            int id = columnType.getId();
-//            String columnName = columnType.getTypeName();
-//
-//            dataListType.add(columnName);
-//            dataListId.add(id);
-//        }
-//
-
-
-
-        mDatabaseHelper = new ExternalDatabaseHelper(this);
+        
 
         try {
-            mDatabaseHelper.createDatabase();
-            mDatabaseHelper.openDatabase();
-        } catch (IOException e) {
+            dataListType = new DatabaseTaskType().execute().get();
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
 
-        // Query the database and retrieve the data
-        SQLiteDatabase database = mDatabaseHelper.getReadableDatabase();
-        Cursor cursor = database.query("ColumnType", null, null, null, null, null, null);
-
-        if (cursor.moveToFirst()) {
-            do {
-                int id = cursor.getInt(cursor.getColumnIndex("type_id"));
-
-                String columnName = cursor.getString(cursor.getColumnIndex("type_name"));
-
-
-                dataListType.add(columnName);
-                dataListId.add(id);
-
-
-            } while (cursor.moveToNext());
-        }
-
-
-        cursor.close();
         return dataListType;
     }
 
-    private List<String> getSubTypeOptions(int selectedOption) {
+    private List<String> getSubTypeOptions(int selectedOption) throws ExecutionException, InterruptedException {
         // Dummy data for spinner2 options based on the selectedOption in spinner1
         subDataListType.clear();
         subDataListId.clear();
 
 
-        mDatabaseHelper = new ExternalDatabaseHelper(this);
-        SQLiteDatabase database = mDatabaseHelper.getReadableDatabase();
-        String selectQuery = " SELECT * FROM ColumnSubtype WHERE type_id = " + selectedOption;
-
-        // Execute the query
-        Cursor cursor = database.rawQuery(selectQuery, null);
-
-        // Check if the cursor has any rows
-        if (cursor.moveToFirst()) {
-            // Iterate through each row and retrieve the data
-            do {
-                // Assuming you have a column named "data" in your table
-                int id = cursor.getInt(cursor.getColumnIndex("subtype_id"));
-
-                String columnName = cursor.getString(cursor.getColumnIndex("subtype_name"));
-
-
-                subDataListType.add(columnName);
-                subDataListId.add(id);
-
-                // Add the data to the list
-
-            } while (cursor.moveToNext());
-        }
-
-
-        cursor.close();
+        subDataListType =  new DatabaseTask().execute(selectedOption).get();
 
 
         return subDataListType;
@@ -366,20 +346,7 @@ public class MainActivity extends AppCompatActivity {
                 columnIndex = cursor.getInt(cursor.getColumnIndex("subtype_id"));
                 Log.d(TAG, "retrieveSelectedValues Sub: " + columnIndex);
             }
-
-
-//            int typeIdPosition = dataListType.indexOf(selectedValue1);
-//
-//            Log.d(TAG, "retrieveSelectedValues type: "+typeIdPosition);
-//
-//            int typeId = dataListId.get(typeIdPosition);
-//
-//
-//            int subTypeIdPosition = subDataListType.indexOf(selectedValue2);
-//
-//            int subTypeId = subDataListId.get(subTypeIdPosition);
-//
-//            Log.d(TAG, "retrieveSelectedValues Sub: "+subTypeId);
+            
 
             String strColumnName = editText.getText().toString();
 
